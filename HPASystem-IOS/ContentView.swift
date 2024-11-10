@@ -15,11 +15,12 @@ struct ContentView: View {
         sortDescriptors: [NSSortDescriptor(keyPath: \Item.timestamp, ascending: true)],
         animation: .default)
     private var items: FetchedResults<Item>
-    
+
     var body: some View {
         NavigationView {
             
             BluetoothListView()
+                .preferredColorScheme(.dark)
         }
     }
 }
