@@ -44,7 +44,7 @@ struct BluetoothListView: View {
             }
             // NavigationDestination para navegar a DashboardView
             .navigationDestination(isPresented: $isConnected) {
-                
+                SelectorView()
             }
         }
         //.navigationBarBackButtonHidden(true) // Oculta el botón de retroceso

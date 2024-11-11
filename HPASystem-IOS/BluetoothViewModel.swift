@@ -6,7 +6,7 @@ import Combine
 struct PeripheralInfo: Identifiable, Equatable {
     let peripheral: CBPeripheral
     var isConnected: Bool
-    var receivedData: (x: Float, y: Float, z: Float)?
+    var receivedData: (semi_mode: Double, auto_mode: Double)?
     var serviceUUID: CBUUID?
     var characteristicUUID: CBUUID?
 
@@ -28,9 +28,9 @@ class BluetoothViewModel: NSObject, ObservableObject, CBCentralManagerDelegate, 
     // Publicaciones para notificar cambios en la interfaz de usuario
     @Published var peripherals: [PeripheralInfo] = []
     @Published var receivedData: String = "" // Para mostrar los datos recibidos de manera legible
-    @Published var receivedDataAM: Float?
-    @Published var receivedDataVC: Float?
-    @Published var receivedDataDC: Float?
+    @Published var semiMode: Double = 0.0
+    @Published var autoMode: Double = 0.0
+
     
     @Published var serviceUUIDs: [CBUUID] = []
     @Published var characteristicUUIDs: [CBUUID] = []
@@ -151,6 +151,17 @@ class BluetoothViewModel: NSObject, ObservableObject, CBCentralManagerDelegate, 
         }
     }
     
+    
+    // Convierte un valor Int32 a Double para el Slider (0.0 - 1.0)
+    func int32ToSliderValue(_ int32Value: Int32) -> Double {
+        return Double(int32Value) / 30.0
+    }
+
+    // Convierte el valor del Slider (Double de 0.0 - 1.0) a Int32
+    func sliderValueToString(_ sliderValue: Double) -> String {
+        return String(Int32(sliderValue * 30))
+    }
+    
     // Manejar actualizaciones de valores para características
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         if let error = error {
@@ -163,45 +174,41 @@ class BluetoothViewModel: NSObject, ObservableObject, CBCentralManagerDelegate, 
             return
         }
         
-        // Asumimos que los datos contienen 3 valores Float (12 bytes)
-        if data.count == MemoryLayout<Float>.size * 3 {
-            let values = data.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) -> (Float, Float, Float) in
-                let floats = pointer.bindMemory(to: Float.self)
-                return (floats[0], floats[1], floats[2])
-            }
-            
-            let valor_x = values.0
-            let valor_y = values.1
-            let valor_z = values.2
-            
-            DispatchQueue.main.async {
-                self.receivedDataAM = valor_x
-                self.receivedDataDC = valor_y
-                self.receivedDataVC = valor_z
-                self.receivedData = String(format: "X: %.2f, Y: %.2f, Z: %.2f", valor_x, valor_y, valor_z)
-                
-                if let index = self.peripherals.firstIndex(where: { $0.peripheral.identifier == peripheral.identifier }) {
-                    self.peripherals[index].receivedData = (x: valor_x, y: valor_y, z: valor_z)
-                }
-            }
-            
-            print("Datos recibidos: X: \(valor_x), Y: \(valor_y), Z: \(valor_z)")
-        } else {
+        // Verificar que el tamaño de los datos coincida con 2 valores Int32 (8 bytes)
+        guard data.count == MemoryLayout<Int32>.size * 2 else {
             print("Datos inválidos recibidos o tamaño incorrecto.")
+            return
         }
+        
+        // Deserializar los datos en dos valores Int32 (semi_mode y auto_mode)
+        let semiMode: Int32 = data.withUnsafeBytes { $0.load(fromByteOffset: 0, as: Int32.self) }
+        let autoMode: Int32 = data.withUnsafeBytes { $0.load(fromByteOffset: 4, as: Int32.self) }
+        
+        // Actualizar los valores en el hilo principal
+        DispatchQueue.main.async {
+            self.semiMode = self.int32ToSliderValue(semiMode)
+            self.autoMode = self.int32ToSliderValue(autoMode)
+            self.receivedData = "Semi Mode: \(semiMode), Auto Mode: \(autoMode)"
+            
+            // Actualizar datos en el periférico específico si es necesario
+            if let index = self.peripherals.firstIndex(where: { $0.peripheral.identifier == peripheral.identifier }) {
+                self.peripherals[index].receivedData = (semi_mode: self.semiMode, auto_mode: self.autoMode)
+            }
+        }
+        
+        print("Datos recibidos: Semi Mode: \(semiMode), Auto Mode: \(autoMode)")
     }
     
     
-    
 // Enviar mensaje "hola" al periférico conectado
-    func sendHelloToPeripheral() {
+    func sendHelloToPeripheral(semioModeValue: Double, autoModeValue: Double) {
         guard let peripheral = connectedPeripheral, let characteristic = getWritableCharacteristic() else {
             print("No hay periférico conectado o característica para escribir no encontrada.")
             return
         }
         
         // Convertir "hola" a datos
-        let message = "hola"
+        let message = "x \(sliderValueToString(semioModeValue)), y: \(sliderValueToString(autoModeValue))"
         if let data = message.data(using: .utf8) {
             peripheral.writeValue(data, for: characteristic, type: .withResponse)
             print("Mensaje 'hola' enviado al periférico.")
