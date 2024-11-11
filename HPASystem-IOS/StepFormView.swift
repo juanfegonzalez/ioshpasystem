@@ -33,7 +33,7 @@ struct StepFormView: View {
                 Spacer()
                 
                 NavigationLink(
-                    destination: BluetoothListView(),
+                    destination: ArmeriaView(),
                     isActive: $navigateToBluetoothListView,
                     label: { EmptyView() }
                 )
@@ -47,6 +47,9 @@ struct StepFormView: View {
                     dismissButton: .default(Text("Entendido"))
                 )
             }
+        }
+        .navigationDestination(isPresented: $navigateToBluetoothListView) {
+            BluetoothListView()
         }
     }
     
