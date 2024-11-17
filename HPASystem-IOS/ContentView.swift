@@ -21,7 +21,7 @@ struct ContentView: View {
             
 
             //BluetoothListView()
-            StepFormView()
+            WelcomeView(viewModel: WelcomeFormViewModel())
                 .preferredColorScheme(.dark)
 
         }

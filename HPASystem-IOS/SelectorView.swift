@@ -29,91 +29,93 @@ struct SelectorView: View {
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // Imagen de fondo ajustada
-                Image("background_image")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: geometry.size.width, height: geometry.size.height)
-                    .clipped()
-                    .ignoresSafeArea()
-                
-                VStack {
-                    // Título
-                    Text("Selector")
-                        .font(.system(size: 34, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                        .shadow(radius: 5)
-                        .padding(.top, 60)
+        NavigationStack {
+            GeometryReader { geometry in
+                ZStack {
+                    // Imagen de fondo ajustada
+                    Image("background_image")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .clipped()
+                        .ignoresSafeArea()
                     
-                    Spacer()
-                    
-                    // Menú inferior
-                    VStack(spacing: 40) {
-                        sliderSection(title: "Semi Mode", value: semiModeBinding)
-                        sliderSection(title: "Auto Mode", value: autoModeBinding)
+                    VStack {
+                        // Título
+                        Text("Selector")
+                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .shadow(radius: 5)
+                            .padding(.top, 60)
                         
-                        // Botón de acción
-                        Button(action: saveAction) {
-                            Text("Guardar")
-                                .fontWeight(.medium)
-                                .frame(maxWidth: 270)
-                                .padding()
-                                .background(Color.red.opacity(0.8))
-                                .cornerRadius(50)
-                                .foregroundColor(.white)
-                        }
-                        .alert(isPresented: $showAlert) {
-                            Alert(
-                                title: Text("Confirmar Envío"),
-                                message: Text("¿Deseas enviar los nuevos datos?"),
-                                primaryButton: .default(Text("Enviar")) {
-                                    sendData()
-                                },
-                                secondaryButton: .cancel(Text("Cancelar"))
-                            )
-                        }
-                    }
-                    .padding()
-                    .frame(maxWidth: 400, maxHeight: 380)
-                    .background(
-                        RoundedRectangle(cornerRadius: 0)
-                            .fill(Color.gray.opacity(0.7))
-                            .clipShape(RoundedCornersShape(corners: [.topLeft, .topRight], radius: 25))
-                    )
-                    .shadow(color: Color.black.opacity(0.4), radius: 15, x: 0, y: 10)
-                    .offset(y: appearFromBottom ? 0 : geometry.size.height)
-                    .animation(.easeOut(duration: 0.8), value: appearFromBottom)
-                    .onAppear {
-                        appearFromBottom = true
-                    }
-                }
-                .ignoresSafeArea(edges: .bottom)
-                
-                // Botón de configuración flotante
-                VStack {
-                    HStack {
                         Spacer()
-                        Button(action: openSettings) {
-                            Image(systemName: "gearshape.fill")
-                                .resizable()
-                                .frame(width: 24, height: 24)
-                                .padding()
-                                .background(Color.gray.opacity(0.8))
-                                .clipShape(Circle())
-                                .shadow(radius: 5)
-                                .accentColor(.white)
+                        
+                        // Menú inferior
+                        VStack(spacing: 40) {
+                            sliderSection(title: "Semi Mode", value: semiModeBinding)
+                            sliderSection(title: "Auto Mode", value: autoModeBinding)
+                            
+                            // Botón de acción
+                            Button(action: saveAction) {
+                                Text("Guardar")
+                                    .fontWeight(.medium)
+                                    .frame(maxWidth: 270)
+                                    .padding()
+                                    .background(Color.red.opacity(0.8))
+                                    .cornerRadius(50)
+                                    .foregroundColor(.white)
+                            }
+                            .alert(isPresented: $showAlert) {
+                                Alert(
+                                    title: Text("Confirmar Envío"),
+                                    message: Text("¿Deseas enviar los nuevos datos?"),
+                                    primaryButton: .default(Text("Enviar")) {
+                                        sendData()
+                                    },
+                                    secondaryButton: .cancel(Text("Cancelar"))
+                                )
+                            }
                         }
-                        .padding(.top, 50)
-                        .padding(.trailing, 20)
+                        .padding()
+                        .frame(maxWidth: 400, maxHeight: 380)
+                        .background(
+                            RoundedRectangle(cornerRadius: 0)
+                                .fill(Color.gray.opacity(0.7))
+                                .clipShape(RoundedCornersShape(corners: [.topLeft, .topRight], radius: 25))
+                        )
+                        .shadow(color: Color.black.opacity(0.4), radius: 15, x: 0, y: 10)
+                        .offset(y: appearFromBottom ? 0 : geometry.size.height)
+                        .animation(.easeOut(duration: 0.8), value: appearFromBottom)
+                        .onAppear {
+                            appearFromBottom = true
+                        }
                     }
-                    Spacer()
+                    .ignoresSafeArea(edges: .bottom)
+                    
+                    // Botón de configuración flotante
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Button(action: openSettings) {
+                                Image(systemName: "gearshape.fill")
+                                    .resizable()
+                                    .frame(width: 24, height: 24)
+                                    .padding()
+                                    .background(Color.gray.opacity(0.8))
+                                    .clipShape(Circle())
+                                    .shadow(radius: 5)
+                                    .accentColor(.white)
+                            }
+                            .padding(.top, 50)
+                            .padding(.trailing, 20)
+                        }
+                        Spacer()
+                    }
                 }
-            }
-            .navigationBarHidden(true)
-            .navigationDestination(isPresented: $isConfirm) {
-                ConfirmationView()
+                .navigationBarHidden(true)
+                .navigationDestination(isPresented: $isConfirm) {
+                    ConfirmationView()
+                }
             }
         }
     }
