@@ -9,9 +9,13 @@
         <attribute name="name" optional="YES" attributeType="String"/>
     </entity>
     <entity name="Weapon" representedClassName="Weapon" syncable="YES" codeGenerationType="class">
+        <attribute name="bluetoothName" optional="YES" attributeType="String"/>
         <attribute name="bullets_magazine" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="characteristicReadUUID" optional="YES" attributeType="String"/>
+        <attribute name="characteristicWriteUUID" optional="YES" attributeType="String"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="serviceUUID" optional="YES" attributeType="String"/>
         <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="type" optional="YES" attributeType="String"/>
     </entity>

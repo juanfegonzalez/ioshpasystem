@@ -179,6 +179,7 @@ struct WelcomeView: View {
             }
             .navigationDestination(isPresented: $navigateToArmeriaView) {
                 ArmeriaView()
+                   
             }
             .navigationDestination(isPresented: $navigateToStepFormView) {
                 StepFormView(viewModel: FormViewModel())

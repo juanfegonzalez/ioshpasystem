@@ -1,7 +1,11 @@
 import SwiftUI
 
 struct BluetoothListView: View {
-    @EnvironmentObject var viewModel: BluetoothViewModel
+    @EnvironmentObject var bluetoothViewModel: BluetoothViewModel
+    @Environment(\.managedObjectContext) private var viewContext
+
+    let selectedWeapon: Weapon // Arma seleccionada
+
     @State private var isLoading = true
     @State private var isConnected = false
 
@@ -10,24 +14,40 @@ struct BluetoothListView: View {
             ZStack {
                 Color.black
                     .ignoresSafeArea()
-                
+
                 if isLoading {
                     SkeletonBluetoothListView() // Mostrar el esqueleto mientras carga
-                } else if viewModel.peripherals.isEmpty {
-                    Text("No se encontraron dispositivos Bluetooth")
-                        .font(.headline)
-                        .foregroundColor(.red)
-                        .multilineTextAlignment(.center)
-                        .padding()
+                } else if bluetoothViewModel.peripherals.isEmpty {
+                    VStack {
+                        Text("No se encontraron dispositivos Bluetooth")
+                            .font(.headline)
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                            .padding()
+
+                        Button(action: bluetoothViewModel.reloadPeripherals) {
+                            Text("Recargar")
+                                .font(.headline)
+                                .padding()
+                                .frame(maxWidth: 200)
+                                .background(Color.red.opacity(0.8))
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                                .shadow(color: Color.red.opacity(0.3), radius: 4, x: 0, y: 4)
+                        }
+                        .padding(.top, 20)
+                    }
                 } else {
                     List {
-                        ForEach(viewModel.peripherals.indices, id: \.self) { index in
-                            let peripheralInfo = viewModel.peripherals[index]
+                        ForEach(bluetoothViewModel.peripherals.indices, id: \.self) { index in
+                            let peripheralInfo = bluetoothViewModel.peripherals[index]
                             PeripheralRow(peripheralInfo: peripheralInfo, action: {
                                 withAnimation {
-                                    // Intenta conectar al periférico seleccionado
-                                    viewModel.connectToPeripheral(peripheralInfo)
-                                    isConnected = peripheralInfo.isConnected // Cambia el estado de conexión
+                                    bluetoothViewModel.connectToPeripheral(peripheralInfo)
+                                    isConnected = peripheralInfo.isConnected
+                                    if peripheralInfo.isConnected {
+                                        saveBluetoothData(for: peripheralInfo)
+                                    }
                                 }
                             })
                         }
@@ -35,26 +55,39 @@ struct BluetoothListView: View {
                     .listStyle(PlainListStyle())
                 }
             }
-            .navigationTitle("Lista de dispositivos:")
+            .navigationTitle("Lista de dispositivos")
             .accentColor(.red)
             .onAppear {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                     isLoading = false
                 }
             }
-            // NavigationDestination para navegar a DashboardView
-            .navigationDestination(isPresented: $isConnected) {
-                SelectorView()
-            }
         }
-        //.navigationBarBackButtonHidden(true) // Oculta el botón de retroceso
-        .onChange(of: viewModel.peripherals) {
-            // Verifica si algún periférico está conectado y cambia el estado de isConnected
-            if viewModel.peripherals.contains(where: { $0.isConnected }) {
-                isConnected = true
-            } else {
-                isConnected = false
-            }
+        .onChange(of: bluetoothViewModel.peripherals) { _ in
+            isConnected = bluetoothViewModel.peripherals.contains { $0.isConnected }
+        }
+    }
+
+    // Guardar datos del periférico conectado en el arma seleccionada
+    private func saveBluetoothData(for peripheralInfo: PeripheralInfo) {
+        // Actualizar datos del arma seleccionada
+        selectedWeapon.bluetoothName = peripheralInfo.peripheral.name
+        selectedWeapon.serviceUUID = peripheralInfo.serviceUUID?.uuidString
+
+        // Acceso directo al método desde viewModel
+        if let writableUUID = bluetoothViewModel.getWritableCharacteristicUUID(for: peripheralInfo.peripheral) {
+            selectedWeapon.characteristicWriteUUID = writableUUID.uuidString
+        }
+        
+        if let readableUUID = bluetoothViewModel.getReadbleCharacteristicUUID(for: peripheralInfo.peripheral) {
+            selectedWeapon.characteristicReadUUID = readableUUID.uuidString
+        }
+
+        do {
+            try viewContext.save()
+            print("Datos del Bluetooth guardados en el arma seleccionada.")
+        } catch {
+            print("Error al guardar los datos en Core Data: \(error.localizedDescription)")
         }
     }
 }
@@ -91,13 +124,5 @@ struct PeripheralRow: View {
         .padding()
         .background(Color.black.opacity(0.8))
         .cornerRadius(10)
-    }
-}
-
-struct BluetoothListView_Previews: PreviewProvider {
-    static var previews: some View {
-        BluetoothListView()
-            .previewDisplayName("Vista con dispositivos")
-            .preferredColorScheme(.dark)
     }
 }
