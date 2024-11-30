@@ -4,10 +4,12 @@ struct BluetoothListView: View {
     @EnvironmentObject var bluetoothViewModel: BluetoothViewModel
     @Environment(\.managedObjectContext) private var viewContext
 
-    let selectedWeapon: Weapon // Arma seleccionada
+    @State var selectedWeapon: Weapon // Arma seleccionada
 
     @State private var isLoading = true
     @State private var isConnected = false
+    @State private var goSelector = false
+
 
     var body: some View {
         NavigationStack {
@@ -47,6 +49,7 @@ struct BluetoothListView: View {
                                     isConnected = peripheralInfo.isConnected
                                     if peripheralInfo.isConnected {
                                         saveBluetoothData(for: peripheralInfo)
+                                        goSelector.toggle()
                                     }
                                 }
                             })
@@ -56,6 +59,9 @@ struct BluetoothListView: View {
                 }
             }
             .navigationTitle("Lista de dispositivos")
+            .navigationDestination(isPresented: $goSelector) {
+                SelectorView(selectedWeapon: selectedWeapon )
+            }
             .accentColor(.red)
             .onAppear {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
@@ -72,15 +78,19 @@ struct BluetoothListView: View {
     private func saveBluetoothData(for peripheralInfo: PeripheralInfo) {
         // Actualizar datos del arma seleccionada
         selectedWeapon.bluetoothName = peripheralInfo.peripheral.name
+        print(peripheralInfo.peripheral.name)
         selectedWeapon.serviceUUID = peripheralInfo.serviceUUID?.uuidString
+        print(peripheralInfo.serviceUUID?.uuidString)
 
         // Acceso directo al método desde viewModel
         if let writableUUID = bluetoothViewModel.getWritableCharacteristicUUID(for: peripheralInfo.peripheral) {
             selectedWeapon.characteristicWriteUUID = writableUUID.uuidString
+            print(writableUUID.uuidString)
         }
         
         if let readableUUID = bluetoothViewModel.getReadbleCharacteristicUUID(for: peripheralInfo.peripheral) {
             selectedWeapon.characteristicReadUUID = readableUUID.uuidString
+            print(readableUUID.uuidString)
         }
 
         do {
@@ -112,7 +122,7 @@ struct PeripheralRow: View {
             }
             Spacer()
             Button(action: action) {
-                Text(peripheralInfo.isConnected ? "Desconectar" : "Conectar")
+                Text(peripheralInfo.isConnected ? "Conectado 👍" : "Conectar")
                     .fontWeight(.bold)
                     .padding(10)
                     .background(Color.red.opacity(0.8))

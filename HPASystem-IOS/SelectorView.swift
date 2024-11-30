@@ -12,6 +12,8 @@ struct SelectorView: View {
     @State private var appearFromBottom = false
     @State private var showAlert = false
     @State private var isConfirm = false
+    @State var selectedWeapon: Weapon // Arma seleccionada
+
 
 
     // Slider bindings
@@ -117,6 +119,9 @@ struct SelectorView: View {
                     ConfirmationView()
                 }
             }
+            .onAppear {
+                viewModel.sendGetData()
+            }
         }
     }
     
@@ -166,8 +171,8 @@ struct SelectorView: View {
     }
     
     private func sendData() {
-        print("Semi Mode: \(viewModel.semiMode), Auto Mode: \(viewModel.autoMode)")
-        viewModel.sendHelloToPeripheral(semioModeValue: viewModel.semiMode, autoModeValue: viewModel.autoMode)
+        print("Semi Mode: \(viewModel.semiMode * 30), Auto Mode: \(viewModel.autoMode * 30)")
+        viewModel.sendSetData(semiModeValue: viewModel.semiMode * 30)
         isConfirm = true
     }
 }
@@ -184,9 +189,9 @@ struct RoundedCornersShape: Shape {
 }
 
 // Vista previa
-struct SelectorView_Previews: PreviewProvider {
-    static var previews: some View {
-        SelectorView()
-            .preferredColorScheme(.dark)
-    }
-}
+//struct SelectorView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        SelectorView()
+//            .preferredColorScheme(.dark)
+//    }
+//}

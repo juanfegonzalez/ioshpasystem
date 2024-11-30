@@ -46,6 +46,7 @@ struct ArmeriaView: View {
                                 }
                         }
                         .onDelete(perform: deleteWeapon)
+                        
                     }
                 }
                 .listStyle(PlainListStyle())
@@ -83,8 +84,11 @@ struct ArmeriaView: View {
         }
         // Navegación a SelectorView
         .navigationDestination(isPresented: $navigateToSelectorView) {
-            SelectorView()
-                .environmentObject(bluetoothViewModel)
+            if let weapon = selectedWeapon {
+                SelectorView(selectedWeapon: weapon)
+                    .environmentObject(bluetoothViewModel)
+            }
+            
         }
     }
 
@@ -93,7 +97,7 @@ struct ArmeriaView: View {
         selectedWeapon = weapon
 
         // Verificar si el arma tiene datos de UUIDs guardados
-        if let serviceUUID = weapon.serviceUUID,
+        if let serviceUUID = weapon.characteristicReadUUID,
            let characteristicReadUUID = weapon.characteristicReadUUID,
            let characteristicWriteUUID = weapon.characteristicWriteUUID {
             // Verificar que los UUIDs están disponibles en los servicios de peripheralInfo
@@ -189,15 +193,6 @@ struct WeaponListItem: View {
                 }
 
                 Spacer()
-
-                Button(action: onEdit) {
-                    Text("Editar")
-                        .fontWeight(.bold)
-                        .padding(10)
-                        .background(Color.blue.opacity(0.8))
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                }
             }
             .padding()
             .background(Color.black.opacity(0.5).cornerRadius(10))

@@ -23,6 +23,19 @@ struct PeripheralInfo: Identifiable, Equatable {
     }
 }
 
+struct GetDataRequest: Codable {
+    var action: String = "GET_DATA"
+}
+
+struct SetDataRequest: Codable {
+    var action: String = "SET_DATA"
+    let repeticion: Double
+}
+
+struct DataResponse: Codable {
+    let repeticion: Double
+}
+
 class BluetoothViewModel: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     
     // Publicaciones para notificar cambios en la interfaz de usuario
@@ -166,19 +179,24 @@ class BluetoothViewModel: NSObject, ObservableObject, CBCentralManagerDelegate, 
             print("Error al recibir datos: \(error.localizedDescription)")
             return
         }
-        
-        guard let data = characteristic.value, data.count == MemoryLayout<Int32>.size * 2 else {
-            print("Datos inválidos recibidos o tamaño incorrecto.")
+
+        guard let data = characteristic.value else {
+            print("Datos inválidos recibidos.")
             return
         }
-        
-        let semiMode = data.withUnsafeBytes { $0.load(fromByteOffset: 0, as: Int32.self) }
-        let autoMode = data.withUnsafeBytes { $0.load(fromByteOffset: 4, as: Int32.self) }
-        
-        DispatchQueue.main.async {
-            self.semiMode = self.int32ToSliderValue(semiMode)
-            self.autoMode = self.int32ToSliderValue(autoMode)
-            self.receivedData = "Semi Mode: \(semiMode), Auto Mode: \(autoMode)"
+
+        do {
+            let response = try JSONDecoder().decode(DataResponse.self, from: data)
+            DispatchQueue.main.async {
+                self.semiMode = response.repeticion
+                print("Datos recibidos: semi_mode = \(response.repeticion)")
+            }
+        } catch {
+            print("Error al decodificar datos recibidos: \(error.localizedDescription)")
+            // Puedes imprimir el string recibido para depuración
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("Datos recibidos no conformes: \(jsonString)")
+            }
         }
     }
     
@@ -204,6 +222,39 @@ class BluetoothViewModel: NSObject, ObservableObject, CBCentralManagerDelegate, 
             print("Mensaje enviado al periférico.")
         } else {
             print("Error al convertir el mensaje en datos.")
+        }
+    }
+    
+    
+    func sendSetData(semiModeValue: Double) {
+        guard let peripheral = connectedPeripheral, let characteristic = getWritableCharacteristic() else {
+            print("No hay periférico conectado o característica para escribir no encontrada.")
+            return
+        }
+
+        let request = SetDataRequest(repeticion: semiModeValue)
+        do {
+            let data = try JSONEncoder().encode(request)
+            peripheral.writeValue(data, for: characteristic, type: .withResponse)
+            print("Mensaje SET_DATA enviado al periférico con semi_mode: \(semiModeValue)")
+        } catch {
+            print("Error al codificar el mensaje SET_DATA: \(error.localizedDescription)")
+        }
+    }
+    
+    func sendGetData() {
+        guard let peripheral = connectedPeripheral, let characteristic = getWritableCharacteristic() else {
+            print("No hay periférico conectado o característica para escribir no encontrada.")
+            return
+        }
+
+        let request = GetDataRequest()
+        do {
+            let data = try JSONEncoder().encode(request)
+            peripheral.writeValue(data, for: characteristic, type: .withResponse)
+            print("Mensaje GET_DATA enviado al periférico.")
+        } catch {
+            print("Error al codificar el mensaje GET_DATA: \(error.localizedDescription)")
         }
     }
     

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ConfirmationView: View {
     @Environment(\.dismiss) var dismiss // Para volver a la vista anterior
+    @State private var showArmeria = false
     
     var body: some View {
         NavigationStack {
@@ -33,7 +34,7 @@ struct ConfirmationView: View {
                     
                     // Botón de volver con estilo redondeado
                     Button(action: {
-                        dismiss()
+                        self.$showArmeria.wrappedValue.toggle()
                     }) {
                         Text("Volver")
                             .font(.headline)
@@ -52,6 +53,9 @@ struct ConfirmationView: View {
             }
         }
         .navigationBarHidden(true)
+        .navigationDestination(isPresented: $showArmeria) {
+            ArmeriaView()
+        }
     }
 }
 
