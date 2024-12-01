@@ -46,7 +46,6 @@ struct BluetoothListView: View {
                             PeripheralRow(peripheralInfo: peripheralInfo, action: {
                                 withAnimation {
                                     bluetoothViewModel.connectToPeripheral(peripheralInfo)
-                                    isConnected = peripheralInfo.isConnected
                                     if peripheralInfo.isConnected {
                                         saveBluetoothData(for: peripheralInfo)
                                         goSelector.toggle()
@@ -78,9 +77,9 @@ struct BluetoothListView: View {
     private func saveBluetoothData(for peripheralInfo: PeripheralInfo) {
         // Actualizar datos del arma seleccionada
         selectedWeapon.bluetoothName = peripheralInfo.peripheral.name
-        print(peripheralInfo.peripheral.name)
-        selectedWeapon.serviceUUID = peripheralInfo.serviceUUID?.uuidString
-        print(peripheralInfo.serviceUUID?.uuidString)
+
+        selectedWeapon.serviceUUID = peripheralInfo.peripheral.identifier.uuidString
+
 
         // Acceso directo al método desde viewModel
         if let writableUUID = bluetoothViewModel.getWritableCharacteristicUUID(for: peripheralInfo.peripheral) {
@@ -122,7 +121,7 @@ struct PeripheralRow: View {
             }
             Spacer()
             Button(action: action) {
-                Text(peripheralInfo.isConnected ? "Conectado 👍" : "Conectar")
+                Text(peripheralInfo.isConnected ? "Ir" : "Conectar")
                     .fontWeight(.bold)
                     .padding(10)
                     .background(Color.red.opacity(0.8))

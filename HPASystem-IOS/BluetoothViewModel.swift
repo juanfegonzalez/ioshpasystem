@@ -100,6 +100,7 @@ class BluetoothViewModel: NSObject, ObservableObject, CBCentralManagerDelegate, 
         characteristicUUID = peripheralInfo.characteristicUUID
         centralManager.connect(peripheralInfo.peripheral, options: nil)
         print("Intentando conectar a: \(peripheralInfo.peripheral.name ?? "Desconocido")")
+        
     }
     
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
@@ -188,7 +189,7 @@ class BluetoothViewModel: NSObject, ObservableObject, CBCentralManagerDelegate, 
         do {
             let response = try JSONDecoder().decode(DataResponse.self, from: data)
             DispatchQueue.main.async {
-                self.semiMode = response.repeticion
+                self.semiMode = response.repeticion / 30
                 print("Datos recibidos: semi_mode = \(response.repeticion)")
             }
         } catch {

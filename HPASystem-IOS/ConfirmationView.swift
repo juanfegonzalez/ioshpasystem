@@ -34,7 +34,8 @@ struct ConfirmationView: View {
                     
                     // Botón de volver con estilo redondeado
                     Button(action: {
-                        self.$showArmeria.wrappedValue.toggle()
+//                        self.$showArmeria.wrappedValue.toggle()
+                        dismiss()
                     }) {
                         Text("Volver")
                             .font(.headline)

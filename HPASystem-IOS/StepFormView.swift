@@ -69,6 +69,7 @@ struct StepFormView: View {
 
                 Spacer()
             }
+            
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.black.opacity(0.6).ignoresSafeArea())
             .alert(item: $activeAlert) { alert in
@@ -235,7 +236,7 @@ struct StepTwoView: View {
     var onPrevious: () -> Void
     var onNext: () -> Void
 
-    let weaponTypes = ["Pistola", "Escopeta", "Rifle", "Francotirador", "Apollo"]
+    let weaponTypes = ["---------", "Pistola", "Escopeta", "Rifle", "Francotirador", "Apollo"]
 
     var body: some View {
         VStack(spacing: 30) {

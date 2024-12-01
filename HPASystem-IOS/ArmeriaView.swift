@@ -17,6 +17,8 @@ struct ArmeriaView: View {
     @State private var navigateToBluetoothListView = false
     @State private var navigateToSelectorView = false
 
+    @State private var isLoading = false
+    
     var body: some View {
         ZStack {
             Color.black.opacity(0.9).ignoresSafeArea()
@@ -68,6 +70,17 @@ struct ArmeriaView: View {
                 .scaleEffect(navigateToStepFormView ? 1.1 : 1.0)
                 .animation(.easeInOut, value: navigateToStepFormView)
             }
+            if isLoading {
+                Color.black.opacity(0.5).edgesIgnoringSafeArea(.all)
+                VStack {
+                    ProgressView("Conectando...")
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.black.opacity(0.8))
+                        .cornerRadius(10)
+                }
+            }
         }
         .navigationBarHidden(true)
         // Navegación a StepFormView
@@ -95,7 +108,8 @@ struct ArmeriaView: View {
     // Función para manejar la selección del arma
     private func handleWeaponSelection(_ weapon: Weapon) {
         selectedWeapon = weapon
-
+        
+        
         // Verificar si el arma tiene datos de UUIDs guardados
         if let serviceUUID = weapon.characteristicReadUUID,
            let characteristicReadUUID = weapon.characteristicReadUUID,
@@ -109,7 +123,26 @@ struct ArmeriaView: View {
                     navigateToBluetoothListView = true
                 }
             } else {
-                navigateToBluetoothListView = true
+                // Recuperar peripheralIdentifier de selectedWeapon e intentar conexión
+                if let peripheralIdentifierString = weapon.serviceUUID,
+                   let peripheralUUID = UUID(uuidString: peripheralIdentifierString) {
+
+                    // Buscar el periférico en la lista de periféricos descubiertos
+                    if let peripheralInfo = bluetoothViewModel.peripherals.first(where: { $0.peripheral.identifier == peripheralUUID }) {
+                        bluetoothViewModel.connectToPeripheral(peripheralInfo)
+                        // Mostrar load durante 3 segundos
+                        isLoading = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            isLoading = false
+                            // Navegar a SelectorView después de que termine la carga
+                            navigateToSelectorView = true
+                        }
+                        //
+                    }
+                } else {
+                    print("No se encontró el periférico asociado al arma seleccionada.")
+                    navigateToBluetoothListView = true
+                }
             }
         } else {
             print("El arma no tiene datos de UUIDs guardados.")
